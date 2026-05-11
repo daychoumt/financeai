@@ -1,0 +1,51 @@
+/* ═══════════════════════════════════════
+   css/animations.css
+═══════════════════════════════════════ */
+
+/* Entrada suave para elementos gerais */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animações de entrada para listas */
+.anim-fade-up   { animation: fadeInUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-fade-in   { animation: fadeIn   0.25s ease both; }
+.anim-scale-in  { animation: scaleIn  0.3s  cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Delays em cascata para listas */
+.anim-delay-1 { animation-delay: 0.05s; }
+.anim-delay-2 { animation-delay: 0.10s; }
+.anim-delay-3 { animation-delay: 0.15s; }
+.anim-delay-4 { animation-delay: 0.20s; }
+
+/* Pulse suave para indicadores */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.anim-pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* Rotação para loaders */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.anim-spin { animation: spin 0.8s linear infinite; }
+
+/* Shimmer para skeleton loading */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
+}

@@ -1,0 +1,116 @@
+/* ═══════════════════════════════════════
+   css/tokens.css — Design system tokens
+═══════════════════════════════════════ */
+
+/* ── DARK MODE (padrão) ── */
+:root, [data-theme="dark"] {
+  /* Backgrounds */
+  --bg-base:      #0a0a0f;
+  --bg-surface:   #111118;
+  --bg-card:      #16161f;
+  --bg-elevated:  #1e1e2a;
+  --bg-input:     #0d0d14;
+  --bg-hover:     #1a1a26;
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.18);
+
+  /* Text */
+  --text-primary:   #f0f0f8;
+  --text-secondary: #a0a0b8;
+  --text-muted:     #606078;
+  --text-inverse:   #0a0a0f;
+
+  /* Brand / Accent */
+  --accent:         #6c63ff;
+  --accent-hover:   #7c74ff;
+  --accent-soft:    rgba(108,99,255,0.15);
+  --accent-glow:    rgba(108,99,255,0.30);
+
+  /* Semantic */
+  --green:        #22c55e;
+  --green-soft:   rgba(34,197,94,0.12);
+  --red:          #ef4444;
+  --red-soft:     rgba(239,68,68,0.12);
+  --yellow:       #f59e0b;
+  --yellow-soft:  rgba(245,158,11,0.12);
+  --blue:         #3b82f6;
+  --blue-soft:    rgba(59,130,246,0.12);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 24px rgba(108,99,255,0.2);
+
+  /* Radius */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  24px;
+  --r-full: 9999px;
+
+  /* Sidebar */
+  --sidebar-w: 240px;
+
+  /* Transitions */
+  --t-fast:   0.15s ease;
+  --t-normal: 0.25s ease;
+  --t-slow:   0.4s ease;
+}
+
+/* ── LIGHT MODE ── */
+[data-theme="light"] {
+  --bg-base:      #f4f4f8;
+  --bg-surface:   #ffffff;
+  --bg-card:      #ffffff;
+  --bg-elevated:  #f8f8fc;
+  --bg-input:     #f0f0f6;
+  --bg-hover:     #eeeef6;
+
+  --border-subtle:  rgba(0,0,0,0.04);
+  --border-default: rgba(0,0,0,0.08);
+  --border-strong:  rgba(0,0,0,0.14);
+
+  --text-primary:   #0f0f1a;
+  --text-secondary: #4a4a6a;
+  --text-muted:     #9090b0;
+  --text-inverse:   #ffffff;
+
+  --accent:         #5b52ff;
+  --accent-hover:   #6c63ff;
+  --accent-soft:    rgba(91,82,255,0.10);
+  --accent-glow:    rgba(91,82,255,0.20);
+
+  --green-soft:   rgba(34,197,94,0.10);
+  --red-soft:     rgba(239,68,68,0.10);
+  --yellow-soft:  rgba(245,158,11,0.10);
+  --blue-soft:    rgba(59,130,246,0.10);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow: 0 0 24px rgba(91,82,255,0.15);
+}
+
+/* ── TIPOGRAFIA BASE ── */
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15px;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  transition: background var(--t-normal), color var(--t-normal);
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Syne', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.brand-accent { color: var(--accent); }
+.text-muted { color: var(--text-muted); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
