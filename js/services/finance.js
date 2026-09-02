@@ -5,6 +5,26 @@
 
 const FinanceService = (() => {
 
+  // Converte cada lançamento antes de somar: 0,10 + 0,20 vira 10 + 20.
+  // Dados legados inválidos não devem tornar todo o resumo NaN/Infinity.
+  function toCents(value) {
+    if (typeof value !== 'number' && typeof value !== 'string') return 0;
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount < 0) return 0;
+    // Deslocamento decimal evita arredondar 10.075 * 100 como 1007.499…
+    const [coefficient, exponent = '0'] = amount.toString().split('e');
+    const cents = Math.round(Number(`${coefficient}e${Number(exponent) + 2}`));
+    return Number.isSafeInteger(cents) ? cents : 0;
+  }
+
+  function addCents(total, cents) {
+    const next = total + cents;
+    if (!Number.isSafeInteger(next)) {
+      throw new RangeError('Total acima do limite de precisão monetária.');
+    }
+    return next;
+  }
+
   /* ─────────────────────────────────────────
      RESUMO MENSAL
   ───────────────────────────────────────── */
@@ -17,10 +37,10 @@ const FinanceService = (() => {
   function calcSummary(txs = []) {
     let income = 0, expense = 0;
     txs.forEach(t => {
-      if (t.type === 'entrada') income  += Number(t.amount) || 0;
-      if (t.type === 'saida')   expense += Number(t.amount) || 0;
+      if (t.type === 'entrada') income = addCents(income, toCents(t.amount));
+      if (t.type === 'saida') expense = addCents(expense, toCents(t.amount));
     });
-    return { income, expense, balance: income - expense };
+    return { income: income / 100, expense: expense / 100, balance: (income - expense) / 100 };
   }
 
   /* ─────────────────────────────────────────
@@ -32,13 +52,12 @@ const FinanceService = (() => {
    * @returns {{ [cat]: number }}
    */
   function calcByCategory(txs = []) {
-    return txs
-      .filter(t => t.type === 'saida')
-      .reduce((acc, t) => {
-        const cat = t.category || 'Outros';
-        acc[cat] = (acc[cat] || 0) + (Number(t.amount) || 0);
-        return acc;
-      }, {});
+    const totals = new Map();
+    txs.filter(t => t.type === 'saida').forEach(t => {
+      const category = t.category || 'Outros';
+      totals.set(category, addCents(totals.get(category) || 0, toCents(t.amount)));
+    });
+    return Object.fromEntries([...totals].map(([category, cents]) => [category, cents / 100]));
   }
 
   /* ─────────────────────────────────────────
@@ -144,9 +163,7 @@ const FinanceService = (() => {
     const dayPassed = today.getDate();
     const daysTotal = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-    const totalSpent = txs
-      .filter(t => t.type === 'saida')
-      .reduce((s, t) => s + Number(t.amount), 0);
+    const totalSpent = calcSummary(txs).expense;
 
     if (dayPassed === 0) return null;
 
@@ -204,7 +221,7 @@ const FinanceService = (() => {
       `  - ${g.name}: ${fmt.currency(g.saved)} / ${fmt.currency(g.target)}`
     ).join('\n');
 
-    const subsTotal = subs.reduce((s, sub) => s + sub.price, 0);
+    const subsTotal = subs.reduce((total, sub) => addCents(total, toCents(sub.price)), 0) / 100;
 
     return `
 DADOS FINANCEIROS DO UTILIZADOR (mês atual):

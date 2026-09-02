@@ -447,31 +447,17 @@
       <section id="page-ai" class="page">
         <div class="page-header">
           <h1 class="page-title">Assistente IA</h1>
-          <p class="page-subtitle">Seu consultor financeiro pessoal</p>
+          <p class="page-subtitle">Temporariamente indisponível</p>
         </div>
 
         <div class="chat-container card">
           <div class="chat-messages" id="chat-messages">
             <div class="chat-bubble chat-bubble--ai">
-              <div class="chat-avatar">◈</div>
-              <div class="chat-text">
-                Olá! Sou seu assistente financeiro inteligente. Posso analisar seus gastos, prever tendências, sugerir economias e responder qualquer dúvida sobre finanças pessoais. Como posso ajudar?
+              <div class="chat-avatar" aria-hidden="true">◈</div>
+              <div class="chat-text" id="chat-status" role="status">
+                O assistente está temporariamente indisponível. Você pode continuar usando os outros recursos do Finance AI.
               </div>
             </div>
-          </div>
-
-          <div class="chat-suggestions" id="chat-suggestions">
-            <button class="suggestion-chip" onclick="sendSuggestion(this)">Como está meu score?</button>
-            <button class="suggestion-chip" onclick="sendSuggestion(this)">Onde estou gastando mais?</button>
-            <button class="suggestion-chip" onclick="sendSuggestion(this)">Como economizar mais?</button>
-            <button class="suggestion-chip" onclick="sendSuggestion(this)">Previsão para o fim do mês</button>
-          </div>
-
-          <div class="chat-input-wrap">
-            <input id="chat-input" class="chat-input" type="text" placeholder="Pergunte sobre suas finanças..." onkeydown="if(event.key==='Enter')sendMessage()" />
-            <button class="chat-send-btn" onclick="sendMessage()">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
           </div>
         </div>
       </section>
@@ -725,3 +711,4 @@
 
 </body>
 </html>
+
