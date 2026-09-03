@@ -14,25 +14,27 @@ Cloudflare Free e Gemini Free têm limites independentes. Quando atingidos, a IA
 
 ## 2. Publicar o Worker
 
-Entre na Cloudflare pelo navegador aberto por este comando:
+Pelo painel, conecte o repositório `daychoumt/financeai` em Workers & Pages. Use nome `financeai`, branch `main`, diretório raiz `/`, build vazio e comando de publicação `npx wrangler deploy`. O arquivo `wrangler.jsonc` da raiz aponta para `worker/index.mjs` e cria o contador SQLite. Atualizações da `main` podem disparar publicação automática.
+
+Como alternativa pelo terminal, entre na Cloudflare pelo navegador aberto por este comando:
 
 ```sh
 npx wrangler@4 login
 ```
 
-Confira `worker/wrangler.jsonc`: projeto `finance-ai-3e186`, origens `https://daychoumt.github.io` e `http://localhost:8000`. Adicione seu domínio próprio se usar outro endereço. O modelo padrão é `gemini-2.5-flash`; substitua `GEMINI_MODEL` se necessário conforme os modelos gratuitos disponíveis na sua conta.
+Confira `wrangler.jsonc`: projeto `finance-ai-3e186`, origens `https://daychoumt.github.io` e `http://localhost:8000`. Adicione seu domínio próprio se usar outro endereço. O modelo padrão é `gemini-2.5-flash`; substitua `GEMINI_MODEL` se necessário conforme os modelos gratuitos disponíveis na sua conta.
 
 Publique a estrutura:
 
 ```sh
-npx wrangler@4 deploy --config worker/wrangler.jsonc
+npx wrangler@4 deploy
 ```
 
 A função permanece bloqueada enquanto faltarem os valores abaixo. Cadastre-os pelos prompts privados, um por vez:
 
 ```sh
-npx wrangler@4 secret put GEMINI_API_KEY --config worker/wrangler.jsonc
-npx wrangler@4 secret put FIREBASE_WEB_API_KEY --config worker/wrangler.jsonc
+npx wrangler@4 secret put GEMINI_API_KEY
+npx wrangler@4 secret put FIREBASE_WEB_API_KEY
 ```
 
 - `GEMINI_API_KEY`: a **nova chave privada Gemini**. Nunca colocar no site, GitHub, argumentos do terminal ou mensagens de chat.
@@ -46,7 +48,7 @@ Copie a URL `workers.dev` mostrada na publicação, acrescente `/chat` e preench
 
 ```js
 const AI_CONFIG = Object.freeze({
-  endpoint: 'https://financeai-chat.SEUSUBDOMINIO.workers.dev/chat'
+  endpoint: 'https://financeai.SEUSUBDOMINIO.workers.dev/chat'
 });
 ```
 
@@ -75,7 +77,7 @@ Não use dados reais para validar o portfólio. A conversa não é salva pelo ap
 
 ```sh
 node --test tests/*.test.cjs
-npx wrangler@4 deploy --dry-run --config worker/wrangler.jsonc
+npx wrangler@4 deploy --dry-run
 ```
 
 Os testes usam respostas simuladas; verificam autenticação, consentimento, cancelamento, quotas, conteúdo inválido, CORS e contrato Gemini. O dry-run valida empacotamento e bindings, sem publicar. A integração ao vivo depende das contas do proprietário e ainda precisa ser validada após ativação.

@@ -1,0 +1,27 @@
+{
+  "name": "financeai",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "vars": {
+    "FIREBASE_PROJECT_ID": "finance-ai-3e186",
+    "GEMINI_MODEL": "gemini-2.5-flash",
+    "ALLOWED_ORIGINS": "https://daychoumt.github.io,http://localhost:8000"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "CHAT_QUOTA",
+        "class_name": "ChatQuota"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ChatQuota"
+      ]
+    }
+  ]
+}
