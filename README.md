@@ -4,7 +4,7 @@ Controle financeiro pessoal em HTML, CSS e JavaScript, com autenticação Fireba
 
 [Acessar o site](https://daychoumt.github.io/financeai/) · [Configurar o projeto](SETUP.md) · [Revisão e próximas etapas](docs/REVISAO-TECNICA.md)
 
-> **Estado desta versão:** o assistente está temporariamente indisponível. A chamada direta ao Gemini foi retirada do navegador; sua retomada depende de um backend autenticado. Uma branch ou pull request não altera automaticamente a versão publicada no GitHub Pages.
+> **Estado desta versão:** o assistente agora possui cliente e backend autenticado. Para responder no site, ainda é necessário cadastrar uma nova chave privada e publicar a função Firebase. Siga o [guia de ativação](docs/AI-SETUP.md). Uma branch ou pull request não altera automaticamente a versão publicada no GitHub Pages.
 
 ## Recursos implementados no código
 
@@ -26,7 +26,7 @@ A existência desses fluxos no código não substitui testes de integração no 
 | `js/auth/auth.js` | Fluxos de autenticação |
 | `js/services/db.js` | Leituras, gravações e listeners do Firestore |
 | `js/services/finance.js` | Resumo, categorias, alertas e projeções |
-| `js/services/ai.js` | Estado indisponível do assistente, sem chamada externa |
+| `js/services/ai.js` | Chat autenticado, resumo opcional e cancelamento ao sair |
 | `js/ui/` | Componentes, páginas e gráficos com Chart.js |
 | `css/` | Estilos, temas e animações |
 | `tests/` | Testes com o runner nativo do Node.js |
@@ -57,7 +57,7 @@ node --test tests/*.test.cjs
 
 Também disponível por `npm test`. O workflow `Testes` executa a suíte em pull requests e atualizações de `main`.
 
-A suíte cobre precisão do resumo, categorias, valores legados inválidos, soma de assinaturas, suspensão do chat sem envio de dados, limpeza e troca de sessão, respostas atrasadas e sintaxe dos scripts. Não verifica autenticação real, regras publicadas no Firestore, aparência no navegador ou disponibilidade do site.
+A suíte cobre precisão do resumo, categorias, valores legados inválidos, soma de assinaturas, chat com consentimento, autenticação e quotas do backend, limpeza e troca de sessão, respostas atrasadas e sintaxe dos scripts. Não verifica autenticação real, regras publicadas no Firestore, aparência no navegador ou disponibilidade do site.
 
 ## Segurança
 

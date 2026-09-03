@@ -447,20 +447,20 @@
 
       <!-- ── ASSISTENTE IA ── -->
       <section id="page-ai" class="page">
-        <div class="page-header">
-          <h1 class="page-title">Assistente IA</h1>
-          <p class="page-subtitle">Temporariamente indisponível</p>
-        </div>
-
+        <div class="page-header"><h1 class="page-title">Assistente IA</h1>
+          <p class="page-subtitle">Tire dúvidas e organize seus próximos passos.</p></div>
         <div class="chat-container card">
-          <div class="chat-messages" id="chat-messages">
-            <div class="chat-bubble chat-bubble--ai">
-              <div class="chat-avatar" aria-hidden="true">◈</div>
-              <div class="chat-text" id="chat-status" role="status">
-                O assistente está temporariamente indisponível. Você pode continuar usando os outros recursos do Finance AI.
-              </div>
+          <div class="chat-messages" id="chat-messages" role="log" aria-label="Conversa com a IA" aria-live="polite"></div>
+          <p id="chat-status" role="status">Como posso ajudar com sua organização financeira?</p>
+          <form id="chat-form" onsubmit="sendMessage(event)">
+            <label for="chat-input">Sua pergunta</label>
+            <div class="chat-input-wrap">
+              <input class="chat-input" id="chat-input" maxlength="2000" required autocomplete="off" placeholder="Como organizar um orçamento mensal?">
+              <button class="chat-send-btn" id="chat-send" type="submit" aria-label="Enviar pergunta">↑</button>
             </div>
-          </div>
+            <label><input type="checkbox" id="chat-share-context"> Compartilhar meu resumo financeiro nesta pergunta</label>
+            <p class="page-subtitle">Sua pergunta será enviada ao Google Gemini. Se marcar a opção, também enviaremos totais, categorias, pontuação, metas e assinaturas. Cada pergunta é independente; a conversa não é salva pelo aplicativo. Confira os valores antes de tomar decisões.</p>
+          </form>
         </div>
       </section>
 

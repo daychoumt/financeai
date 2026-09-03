@@ -14,3 +14,5 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
+      - run: npm ci --prefix functions --ignore-scripts
+      - run: node -e "if (typeof require('./functions').financeChat !== 'function') process.exit(1)"

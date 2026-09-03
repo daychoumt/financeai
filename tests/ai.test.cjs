@@ -2,32 +2,52 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../js/services/ai.js'), 'utf8');
-
-test('assistente indisponível nunca envia mensagens nem contexto financeiro', async () => {
-  let requests = 0;
-  const context = vm.createContext({fetch() { requests++; throw Error('Rede não permitida'); }});
-  const ai = vm.runInContext(source + '\nAIService;', context);
-  ai.setContext('Dados fictícios de teste');
-  await assert.rejects(ai.chat('Qual é meu saldo?'), {code: 'AI_UNAVAILABLE'});
-  ai.clearHistory();
-  assert.equal(requests, 0);
+const source = fs.readFileSync(require('node:path').join(__dirname, '../js/services/ai.js'), 'utf8');
+function client(fetch) {
+  const user = {getIdToken: async () => 'test-token'};
+  const Auth = {currentUser: user};
+  const ai = vm.runInNewContext(source + '\nAIService;', {Auth, FIREBASE_CONFIG: {projectId: 'test'}, fetch, AbortController, setTimeout, clearTimeout});
+  return {ai, Auth};
+}
+test('contexto somente enviado com consentimento; token enviado ao backend', async () => {
+  const bodies = [];
+  const {ai} = client(async (url, options) => {
+    assert.match(url, /cloudfunctions.net\/financeChat$/);
+    assert.equal(options.headers.Authorization, 'Bearer test-token');
+    bodies.push(JSON.parse(options.body));
+    return {ok: true, json: async () => ({reply: 'Olá'})};
+  });
+  ai.setContext('resumo fictício');
+  assert.equal(await ai.chat('Oi'), 'Olá');
+  await ai.chat('Oi', true);
+  assert.equal(bodies[0].context, '');
+  assert.equal(bodies[1].context, 'resumo fictício');
 });
-
-test('ações antigas do chat exibem o estado indisponível sem rede', () => {
-  const status = {textContent: ''};
-  const context = vm.createContext({document: {getElementById: () => status}});
-  vm.runInContext(source + '\nsendSuggestion(); sendMessage();', context);
-  assert.match(status.textContent, /temporariamente indisponível/);
+test('logout durante resposta não retorna conteúdo para outra sessão', async () => {
+  let resolve;
+  const {ai, Auth} = client(() => new Promise(r => {resolve = r;}));
+  const promise = ai.chat('Oi');
+  await new Promise(r => setImmediate(r));
+  ai.clearHistory(); Auth.currentUser = null;
+  resolve({ok: true, json: async () => ({reply: 'privado'})});
+  await assert.rejects(promise, /interrompida/);
 });
-
-test('a tela não oferece envio enquanto o assistente está suspenso', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
-  assert.match(html, /id="chat-status" role="status"/);
-  assert.doesNotMatch(html, /id="chat-input"|onclick="sendMessage\(\)"|onclick="sendSuggestion/);
+test('logout durante obtenção do token evita chamada', async () => {
+  let calls = 0;
+  const {ai, Auth} = client(() => { calls++; });
+  let resolve;
+  Auth.currentUser.getIdToken = () => new Promise(r => {resolve = r;});
+  const promise = ai.chat('Oi');
+  ai.clearHistory(); resolve('token');
+  await assert.rejects(promise, /interrompida/);
+  assert.equal(calls, 0);
 });
-
-test('cliente não contém chave nem endpoint direto do Gemini', () => {
-  assert.doesNotMatch(source, /AIza[\w-]{20,}|generativelanguage\.googleapis\.com|GEMINI_API_KEY/);
+test('sem login não envia; pergunta vazia também recusada', async () => {
+  const {ai, Auth} = client(() => {throw Error('Não deve chamar');});
+  Auth.currentUser = null;
+  await assert.rejects(ai.chat('Oi'), /Entre/);
+  await assert.rejects(ai.chat(' '), /Digite/);
+});
+test('cliente não contém chave nem endpoint direto Gemini e renderiza texto', () => {
+  assert.doesNotMatch(source, /AIza[\w-]{20,}|generativelanguage\.googleapis\.com|GEMINI_API_KEY|innerHTML/);
 });

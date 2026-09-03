@@ -120,7 +120,7 @@ financeai/
 │   ├── services/
 │   │   ├── db.js           ← Acesso ao Firestore
 │   │   ├── finance.js      ← Cálculos financeiros
-│   │   └── ai.js           ← Assistente temporariamente indisponível
+│   │   └── ai.js           ← Cliente do assistente autenticado
 │   └── ui/
 │       ├── components.js   ← Toast, modal, tema, nav
 │       ├── charts.js       ← Gráficos Chart.js
@@ -130,11 +130,11 @@ financeai/
 
 ## Assistente e credenciais
 
-O chat está temporariamente indisponível nesta versão. Não cole uma nova chave Gemini em `js/services/ai.js`, `js/config.js`, HTML, arquivos públicos ou variáveis incorporadas ao frontend durante um build.
+O chat tem backend implementado e requer ativação seguindo o [guia da IA](docs/AI-SETUP.md). Não cole uma nova chave Gemini em `js/services/ai.js`, `js/config.js`, HTML, arquivos públicos ou variáveis incorporadas ao frontend durante um build.
 
 Se uma chave privada já foi publicada, revogue-a no [Google AI Studio](https://aistudio.google.com/app/apikey). Apagar do arquivo não remove o histórico nem invalida a credencial.
 
-A retomada exige um backend autenticado, armazenamento do segredo no servidor e limites de uso. Nenhum backend foi implementado nesta etapa. Veja a [revisão técnica](docs/REVISAO-TECNICA.md).
+O backend em `functions/` valida o token Firebase, guarda o segredo no servidor e limita o uso. A publicação e o cadastro do segredo ainda dependem do proprietário. Veja a [revisão técnica](docs/REVISAO-TECNICA.md).
 
 A configuração Web do Firebase tem finalidade diferente: ela identifica o projeto no navegador. Restrinja a chave às APIs necessárias e use Authentication e Security Rules para controlar dados. Não reutilize uma chave privada de IA como configuração pública.
 

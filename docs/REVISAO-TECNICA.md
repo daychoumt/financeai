@@ -8,7 +8,7 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 
 | Problema observado | Alteração | Validação |
 | --- | --- | --- |
-| Credencial Gemini e chamada ao provedor no navegador | Integração direta retirada; assistente temporariamente indisponível | Testes de ausência de rede e estado indisponível |
+| Credencial Gemini e chamada ao provedor no navegador | Integração direta retirada; backend autenticado implementado, aguardando ativação | Testes de consentimento, token, quotas e isolamento |
 | Acúmulo monetário em ponto flutuante | Resumo e categorias somam centavos | Testes com valores fracionários e muitos lançamentos |
 | Strings de assinaturas concatenadas no contexto | Conversão antes da soma | 19,90 + 10,10 resulta em 30,00 |
 | README descrevia categorização local como IA e isolamento como garantido | Descrição compatível com o código e limites da validação | Leitura dos serviços e da documentação |
@@ -18,7 +18,7 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 1. Revogar a credencial Gemini anteriormente publicada no Google AI Studio e conferir seu uso no provedor. Não testar nem compartilhar a chave exposta.
 2. Integrar e publicar as alterações após revisão. Até isso ocorrer, a versão pública continua com o código anterior.
 3. Conferir as regras efetivamente publicadas no Firestore e testar usuário A, usuário B e acesso sem autenticação em desenvolvimento.
-4. Antes de reativar o assistente: backend com segredo de servidor, validação do token Firebase, limites de uso, tratamento de erros e informação clara sobre os dados enviados ao provedor. Um proxy aberto não resolve o controle de acesso.
+4. Ativar o backend implementado seguindo [AI-SETUP.md](AI-SETUP.md): cadastrar segredo novo, revisar regras e publicar a função. A integração ao vivo permanece não validada.
 
 ## Próximas correções identificadas
 
@@ -52,3 +52,7 @@ Essas pendências não foram corrigidas nesta etapa. O aplicativo inteiro não d
 - Login, cadastro e recuperação usam formulários nativos, labels associados, mensagens acessíveis e controles maiores. CSS restrito à autenticação mantém o layout das páginas internas.
 
 Validação: 28 testes locais com Node.js, incluindo testes unitários com Firebase e DOM simulados. Também foi conferida a estrutura HTML dos três formulários. Não houve teste visual, login real ou verificação das regras publicadas no Firebase. O bloqueio da sessão no cliente não revoga gravações já enviadas ao servidor nem limpa o cache persistente do Firestore.
+
+## Integração IA
+
+Cliente e backend Firebase adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 35 testes passando; serviços externos são simulados. A função ainda não foi publicada nem testada com uma chave real.
