@@ -1,3 +1,4 @@
+// Firebase Web API key identifies the public project; GEMINI_API_KEY remains a Cloudflare secret.
 {
   "name": "financeai",
   "main": "worker/index.mjs",
@@ -6,7 +7,8 @@
   "vars": {
     "FIREBASE_PROJECT_ID": "finance-ai-3e186",
     "GEMINI_MODEL": "gemini-2.5-flash",
-    "ALLOWED_ORIGINS": "https://daychoumt.github.io,http://localhost:8000"
+    "ALLOWED_ORIGINS": "https://daychoumt.github.io,http://localhost:8000",
+    "FIREBASE_WEB_API_KEY": "AIzaSyDJBFrih9vXdhrQx7oQHRb6Mft7XoyOGlk"
   },
   "durable_objects": {
     "bindings": [

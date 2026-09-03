@@ -8,7 +8,7 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 
 | Problema observado | Alteração | Validação |
 | --- | --- | --- |
-| Credencial Gemini e chamada ao provedor no navegador | Integração direta retirada; backend autenticado implementado, aguardando ativação | Testes de consentimento, token, quotas e isolamento |
+| Credencial Gemini e chamada ao provedor no navegador | Integração direta retirada; backend publicado e conectado; validação autenticada pendente | Testes de consentimento, token, quotas e isolamento |
 | Acúmulo monetário em ponto flutuante | Resumo e categorias somam centavos | Testes com valores fracionários e muitos lançamentos |
 | Strings de assinaturas concatenadas no contexto | Conversão antes da soma | 19,90 + 10,10 resulta em 30,00 |
 | README descrevia categorização local como IA e isolamento como garantido | Descrição compatível com o código e limites da validação | Leitura dos serviços e da documentação |
@@ -16,7 +16,7 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 ## Pendências de produção
 
 1. Revogar a credencial Gemini anteriormente publicada no Google AI Studio e conferir seu uso no provedor. Não testar nem compartilhar a chave exposta.
-2. Integrar e publicar as alterações após revisão. Até isso ocorrer, a versão pública continua com o código anterior.
+2. Alterações incorporadas à main e publicadas no GitHub Pages.
 3. Conferir as regras efetivamente publicadas no Firestore e testar usuário A, usuário B e acesso sem autenticação em desenvolvimento.
 4. Ativar o backend implementado seguindo [AI-SETUP.md](AI-SETUP.md): cadastrar segredo novo e publicar o Worker Cloudflare. A integração ao vivo permanece não validada.
 
@@ -55,6 +55,6 @@ Validação: 28 testes locais com Node.js, incluindo testes unitários com Fireb
 
 ## Integração IA
 
-Cliente e backend Cloudflare Workers adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 37 testes passando; serviços externos são simulados. O Worker ainda não foi publicado nem testada com uma chave real.
+Cliente e backend Cloudflare Workers adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 37 testes passando; serviços externos são simulados. O Worker foi publicado; uma resposta autenticada do Gemini ainda não foi validada.
 
-A implementação Cloud Functions que exigia Blaze foi substituída por Worker com quotas em Durable Object SQLite. Firebase Spark permanece para login e dados. A URL pública do Worker deve ser cadastrada em `js/ai-config.js`. Nenhuma implantação ou configuração de segredo foi realizada.
+A implementação Cloud Functions que exigia Blaze foi substituída por Worker com quotas em Durable Object SQLite. Firebase Spark permanece para login e dados. A URL pública foi configurada em `js/ai-config.js`. O proprietário cadastrou o segredo Gemini no painel; o valor não foi lido pela automação. O identificador público Firebase Web foi configurado no Worker e aceito pelo endpoint Auth REST, que rejeitou um token inválido de teste.

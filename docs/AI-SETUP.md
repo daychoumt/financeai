@@ -2,7 +2,7 @@
 
 Arquitetura: GitHub Pages → Cloudflare Worker → Gemini. Login e dados continuam no Firebase Spark. O Worker verifica o token com o Firebase Auth REST e usa um Durable Object SQLite privado para quotas. Não usa Cloud Functions, Firestore Admin nem conta de serviço.
 
-O código está pronto para configurar, mas ainda não foi implantado. A URL em `js/ai-config.js` fica vazia até a publicação. Sem URL, o chat informa que precisa ser ativado e não envia dados.
+O Worker foi publicado e o endereço de produção está configurado em `js/ai-config.js`. A chave privada deve continuar cadastrada como segredo na Cloudflare, e a rota de Produção workers.dev precisa estar habilitada. Uma conversa autenticada ainda precisa ser validada no site. Para outros projetos, siga os passos abaixo.
 
 ## 1. Contas e chave
 
@@ -30,15 +30,14 @@ Publique a estrutura:
 npx wrangler@4 deploy
 ```
 
-A função permanece bloqueada enquanto faltarem os valores abaixo. Cadastre-os pelos prompts privados, um por vez:
+A função permanece bloqueada enquanto faltarem os valores abaixo. Cadastre a chave Gemini pelo prompt privado:
 
 ```sh
 npx wrangler@4 secret put GEMINI_API_KEY
-npx wrangler@4 secret put FIREBASE_WEB_API_KEY
 ```
 
 - `GEMINI_API_KEY`: a **nova chave privada Gemini**. Nunca colocar no site, GitHub, argumentos do terminal ou mensagens de chat.
-- `FIREBASE_WEB_API_KEY`: o valor `apiKey` da configuração Web do projeto Firebase usado pelo site. É diferente da chave Gemini. Não é conta de serviço. A API Identity Toolkit precisa estar permitida. Se a chave Web tiver restrições de referenciador de navegador, crie uma chave separada do mesmo projeto restrita à Identity Toolkit API para o Worker, preservando as restrições da chave do site.
+- `FIREBASE_WEB_API_KEY`: já configurada em `wrangler.jsonc` com o identificador público Firebase Web do próprio site; não é a chave privada Gemini nem uma conta de serviço. Para outro projeto, atualize-a junto com `FIREBASE_PROJECT_ID`. A API Identity Toolkit precisa estar permitida. Se a chave Web tiver restrições de referenciador de navegador, crie outra do mesmo projeto restrita à Identity Toolkit API para o Worker, preservando as restrições da chave do site.
 
 A configuração cria o Durable Object com `new_sqlite_classes`, compatível com Workers Free. Não troque por `new_classes`, que usa outro tipo de armazenamento.
 
@@ -80,6 +79,6 @@ node --test tests/*.test.cjs
 npx wrangler@4 deploy --dry-run
 ```
 
-Os testes usam respostas simuladas; verificam autenticação, consentimento, cancelamento, quotas, conteúdo inválido, CORS e contrato Gemini. O dry-run valida empacotamento e bindings, sem publicar. A integração ao vivo depende das contas do proprietário e ainda precisa ser validada após ativação.
+Os testes usam respostas simuladas; verificam autenticação, consentimento, cancelamento, quotas, conteúdo inválido, CORS e contrato Gemini. O dry-run valida empacotamento e bindings, sem publicar. A resposta autenticada do Gemini ainda precisa ser validada após a ativação. A consulta de autenticação foi verificada com um token deliberadamente inválido, sem ler contas ou dados de usuários.
 
 Referências: [Workers Free](https://developers.cloudflare.com/workers/platform/limits/), [Durable Objects Free/SQLite](https://developers.cloudflare.com/durable-objects/platform/pricing/), [Firebase Auth REST](https://firebase.google.com/docs/reference/rest/auth), [Gemini gratuito](https://ai.google.dev/gemini-api/docs/billing), [uso dos dados](https://ai.google.dev/gemini-api/docs/pricing).

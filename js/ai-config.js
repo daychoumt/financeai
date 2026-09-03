@@ -1,2 +1,2 @@
-// Public Worker URL, never an API key. Fill after deploying wrangler.jsonc.
-const AI_CONFIG = Object.freeze({endpoint: ''});
+// Public backend URL. Private model credentials stay in Cloudflare secrets.
+const AI_CONFIG = Object.freeze({endpoint: 'https://financeai.thalysdaychoum2.workers.dev/chat'});
