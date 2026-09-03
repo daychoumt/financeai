@@ -22,7 +22,7 @@ Como alternativa pelo terminal, entre na Cloudflare pelo navegador aberto por es
 npx wrangler@4 login
 ```
 
-Confira `wrangler.jsonc`: projeto `finance-ai-3e186`, origens `https://daychoumt.github.io` e `http://localhost:8000`. Adicione seu domínio próprio se usar outro endereço. O modelo padrão é `gemini-2.5-flash`; substitua `GEMINI_MODEL` se necessário conforme os modelos gratuitos disponíveis na sua conta.
+Confira `wrangler.jsonc`: projeto `finance-ai-3e186`, origens `https://daychoumt.github.io` e `http://localhost:8000`. Adicione seu domínio próprio se usar outro endereço. O modelo padrão é `gemini-3.1-flash-lite`; substitua `GEMINI_MODEL` se necessário conforme os modelos gratuitos disponíveis na sua conta.
 
 Publique a estrutura:
 
@@ -102,3 +102,7 @@ O chat exibe códigos estáveis sem mostrar a resposta bruta do provedor ou cred
 | `HTTP_403` / `HTTP_503` | Bloqueio ou resposta sem código conhecido; conferir somente o status/corpo sanitizado. |
 
 Compartilhe apenas o código mostrado na interface. Nunca publique o cabeçalho Authorization, tokens, arquivos HAR sem sanitização ou valores de segredos. No Gemini 2.5 Flash, a consulta curta usa thinkingBudget zero para reservar o orçamento de saída para o texto final. Outros modelos mantêm sua configuração padrão.
+
+### Modelo indisponível
+
+O proprietário recebeu `AI_MODEL_UNAVAILABLE` com Gemini 2.5 Flash. O padrão foi atualizado para `gemini-3.1-flash-lite`. Se ocorrer outra indisponibilidade de modelo (404), o Worker consulta o catálogo associado à chave e faz no máximo uma tentativa alternativa, somente com um modelo listado como compatível com `generateContent` e pertencente à lista explícita: Gemini 3.1 Flash-Lite, 3.5 Flash-Lite ou 2.5 Flash-Lite. São modelos com modalidade gratuita documentada; disponibilidade e cota dependem do projeto. Não há troca automática de plano ou de provedor. Falhas de chave, permissão e cota não provocam tentativa em outro modelo. O timeout de 25 segundos abrange toda a operação.

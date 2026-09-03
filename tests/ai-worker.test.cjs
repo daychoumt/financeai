@@ -95,8 +95,36 @@ test('diagnóstico Gemini distingue chave, permissão, modelo, quota e provedor 
 });
 test('resposta curta reserva tokens para texto e identifica resposta vazia',async()=>{
  const {generate}=await modulePromise;
- await assert.rejects(generate({message:'Oi'},env(),async(url,options)=>{
+ await assert.rejects(generate({message:'Oi'},{...env(),GEMINI_MODEL:'gemini-2.5-flash'},async(url,options)=>{
   assert.equal(JSON.parse(options.body).generationConfig.thinkingConfig.thinkingBudget,0);
   return Response.json({candidates:[{content:{parts:[]},finishReason:'MAX_TOKENS'}]});
  }),{code:'AI_EMPTY_RESPONSE'});
+});
+test('modelo indisponível usa uma alternativa gratuita confirmada no catálogo',async()=>{
+ const {generate}=await modulePromise;const calls=[];let signal;
+ const result=await generate({message:'Oi'},env(),async(url,options)=>{
+  calls.push(url);if(signal)assert.equal(options.signal,signal);signal=options.signal;
+  if(calls.length===1){assert.match(url,/gemini-3\.1-flash-lite:generateContent$/);return Response.json({}, {status:404});}
+  if(calls.length===2){assert.match(url,/\/models\?pageSize=1000$/);assert.equal(options.body,undefined);return Response.json({models:[
+    {name:'models/gemini-pro-paid',supportedGenerationMethods:['generateContent']},
+    {name:'models/gemini-3.5-flash-lite',supportedGenerationMethods:['generateContent']}
+  ]});}
+  assert.match(url,/gemini-3\.5-flash-lite:generateContent$/);
+  return Response.json({candidates:[{content:{parts:[{text:'Funcionou'}]}}]});
+ });assert.equal(result,'Funcionou');assert.equal(calls.length,3);
+});
+test('fallback não escolhe modelos fora da lista nem métodos incompatíveis',async()=>{
+ const {generate}=await modulePromise;let calls=0;
+ await assert.rejects(generate({message:'Oi'},env(),async()=>{
+  calls++;return calls===1?Response.json({}, {status:404}):Response.json({models:[
+    {name:'models/gemini-3.5-flash-lite',supportedGenerationMethods:['embedContent']},
+    {name:'models/gemini-pro-paid',supportedGenerationMethods:['generateContent']}
+  ]});
+ }),{code:'AI_MODEL_UNAVAILABLE'});assert.equal(calls,2);
+});
+test('falhas de permissão e cota não geram tentativas extras',async()=>{
+ const {generate}=await modulePromise;
+ for(const status of [403,429]){let calls=0;await assert.rejects(generate({message:'Oi'},env(),async()=>{
+   calls++;return Response.json({}, {status});
+  }));assert.equal(calls,1);}
 });
