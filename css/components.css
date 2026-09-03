@@ -732,3 +732,17 @@
   .form-inline { flex-direction: column; }
   .form-inline button { width: 100%; }
 }
+
+
+/* Chat: composer and privacy controls remain reachable on small screens. */
+#page-ai .chat-container { height: auto; min-height: 0; }
+#page-ai .chat-messages { flex: none; min-height: 140px; max-height: 50vh; }
+#page-ai .chat-text { overflow-wrap: anywhere; min-width: 0; }
+#chat-status { padding: 12px 20px; color: var(--text-secondary); }
+#chat-form { padding: 0 20px 20px; display: grid; gap: 12px; }
+#chat-form .chat-input-wrap { padding: 0; border: 0; }
+#chat-form .chat-input { min-width: 0; }
+#chat-form label { line-height: 1.5; }
+#chat-form .page-subtitle { font-size: 12px; line-height: 1.6; }
+#chat-send:disabled { opacity: .5; cursor: wait; }
+#chat-form :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

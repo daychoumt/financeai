@@ -15,22 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* Enter nos campos */
-  ['login-email','login-password'].forEach(id => {
-    document.getElementById(id)?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleLogin();
-    });
-  });
-
-  ['reg-name','reg-email','reg-password'].forEach(id => {
-    document.getElementById(id)?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleRegister();
-    });
-  });
-
-  document.getElementById('forgot-email')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleForgot();
-  });
+  // Os formulários usam submit nativo, inclusive pelo teclado.
 
 });
 
@@ -38,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
    MOSTRAR / ESCONDER ECRÃS
 ───────────────────────────────────────── */
 function showApp(user) {
+  // init limpa a sessão anterior antes de preencher a identidade desta conta.
+  if (typeof AppController !== 'undefined') AppController.init(user);
   // Força a transição de tela
   const authScreen = document.getElementById('auth-screen');
   const appScreen  = document.getElementById('app-screen');
@@ -61,17 +48,21 @@ function showApp(user) {
   if (nameInput)  nameInput.value  = name;
   if (emailInput) emailInput.value = email;
 
-  if (typeof AppController !== 'undefined') {
-    AppController.init(user);
-  }
 }
 
 function showAuthScreen() {
-  // Esconde loading
+  if (typeof AppController !== 'undefined') AppController.destroy();
   if (typeof hideLoading === 'function') hideLoading();
 
-  document.getElementById('auth-screen').hidden = false;
-  document.getElementById('app-screen').hidden  = true;
+  const authScreen = document.getElementById('auth-screen');
+  const appScreen = document.getElementById('app-screen');
+  if (authScreen) { authScreen.hidden = false; authScreen.style.display = 'flex'; }
+  if (appScreen) { appScreen.hidden = true; appScreen.style.display = 'none'; }
+  ['login-password', 'reg-password'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  });
+  ['btn-login', 'btn-register', 'btn-forgot'].forEach(id => setAuthLoading(id, false));
 }
 
 /* ─────────────────────────────────────────
@@ -99,7 +90,8 @@ function togglePw(inputId, btn) {
   if (!input) return;
   const isHidden = input.type === 'password';
   input.type     = isHidden ? 'text' : 'password';
-  btn.style.opacity = isHidden ? '1' : '0.5';
+  btn.setAttribute('aria-pressed', String(isHidden));
+  btn.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
 }
 
 /* ─────────────────────────────────────────
@@ -263,12 +255,11 @@ async function handleForgot() {
 ───────────────────────────────────────── */
 async function handleLogout() {
   try {
-    if (typeof AppController !== 'undefined') {
-      AppController.destroy();
-    }
+    // O observer limpa a sessão após o Firebase confirmar a saída.
     await Auth.signOut();
   } catch (err) {
     console.error('Logout error:', err);
+    showToast('Não foi possível sair. Tente novamente.', 'error');
   }
 }
 
@@ -277,18 +268,23 @@ async function handleLogout() {
 ───────────────────────────────────────── */
 async function saveProfile() {
   const user = Auth.currentUser;
-  if (!user) return;
+  const session = window._appState;
+  const isCurrent = () => user && Auth.currentUser?.uid === user.uid && window._appState === session;
+  if (!isCurrent()) return;
 
   const name = document.getElementById('settings-name')?.value?.trim();
   if (!name) { showToast('Digite um nome válido.', 'error'); return; }
 
   try {
     await user.updateProfile({ displayName: name });
+    if (!isCurrent()) return;
     await DB.collection('users').doc(user.uid).update({ name });
+    if (!isCurrent()) return;
     document.getElementById('user-name-sidebar').textContent = name;
     document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
     showToast('Perfil atualizado!', 'success');
   } catch (err) {
-    showToast('Erro ao salvar perfil.', 'error');
+    if (isCurrent()) showToast('Erro ao salvar perfil.', 'error');
   }
 }
+

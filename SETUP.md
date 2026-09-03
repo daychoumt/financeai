@@ -25,9 +25,9 @@
 
 ---
 
-## 3. Colar as chaves no projeto
+## 3. Configurar o Firebase Web
 
-Abra o ficheiro **`js/config.js`** e substitua os valores:
+Abra o arquivo **`js/config.js`** e substitua os valores:
 
 ```js
 const FIREBASE_CONFIG = {
@@ -73,13 +73,13 @@ service cloud.firestore {
 }
 ```
 
-Isso garante que **cada utilizador só acede aos seus próprios dados**.
+Essas regras precisam estar publicadas no projeto correto. Teste, em desenvolvimento, que cada conta acessa apenas os próprios dados e que acessos sem autenticação são recusados. O repositório não confirma quais regras estão ativas no seu Firebase.
 
 ---
 
 ## 6. Publicar no GitHub Pages
 
-1. Faça upload de todos os ficheiros para o repositório GitHub
+1. Faça upload de todos os arquivos para o repositório GitHub
 2. Vá em **Settings → Pages**
 3. Selecione a branch `main` e pasta `/root`
 4. O site ficará disponível em `https://seuuser.github.io/seu-repo`
@@ -99,7 +99,7 @@ Acesse o seu link do GitHub Pages e crie a primeira conta!
 
 ---
 
-## Estrutura de ficheiros
+## Estrutura de arquivos
 
 ```
 financeai/
@@ -108,22 +108,40 @@ financeai/
 ├── css/
 │   ├── reset.css
 │   ├── tokens.css          ← Design tokens (cores, espaçamentos)
-│   ├── auth.css            ← Tela de login/registo
+│   ├── auth.css            ← Tela de login/cadastro
 │   ├── app.css             ← Layout principal
 │   ├── components.css      ← Componentes reutilizáveis
 │   └── animations.css
 ├── js/
-│   ├── config.js           ← ⚠️ COLOQUE SUAS CHAVES AQUI
+│   ├── config.js           ← Configuração pública Firebase Web
 │   ├── app.js              ← Controlador principal
 │   ├── auth/
 │   │   └── auth.js         ← Autenticação Firebase
 │   ├── services/
 │   │   ├── db.js           ← Acesso ao Firestore
 │   │   ├── finance.js      ← Cálculos financeiros
-│   │   └── ai.js           ← Chatbot IA (Claude)
+│   │   └── ai.js           ← Cliente do assistente autenticado
 │   └── ui/
 │       ├── components.js   ← Toast, modal, tema, nav
 │       ├── charts.js       ← Gráficos Chart.js
 │       └── pages.js        ← Renderização das páginas
 └── assets/                 ← Adicione ícones PWA aqui
 ```
+
+## Assistente e credenciais
+
+O chat tem backend implementado e requer ativação seguindo o [guia da IA](docs/AI-SETUP.md). Não cole uma nova chave Gemini em `js/services/ai.js`, `js/config.js`, HTML, arquivos públicos ou variáveis incorporadas ao frontend durante um build.
+
+Se uma chave privada já foi publicada, revogue-a no [Google AI Studio](https://aistudio.google.com/app/apikey). Apagar do arquivo não remove o histórico nem invalida a credencial.
+
+O backend em `worker/` valida o token Firebase, guarda o segredo na Cloudflare e limita o uso com Durable Objects SQLite do plano gratuito. O Firebase pode permanecer no Spark. A publicação e o cadastro do segredo ainda dependem do proprietário. Veja a [revisão técnica](docs/REVISAO-TECNICA.md).
+
+A configuração Web do Firebase tem finalidade diferente: ela identifica o projeto no navegador. Restrinja a chave às APIs necessárias e use Authentication e Security Rules para controlar dados. Não reutilize uma chave privada de IA como configuração pública.
+
+## Desenvolvimento e testes
+
+Use seu próprio Firebase de desenvolvimento, sem dados reais de pacientes ou de terceiros. Autorize também `localhost` nos domínios de Authentication se necessário.
+
+Para servir os arquivos, execute `python -m http.server 8000` na pasta do projeto e acesse `http://localhost:8000`.
+
+Com Node.js 22 ou superior, execute `node --test tests/*.test.cjs`. Os testes são locais e não usam contas ou dados do Firebase. Eles não validam as regras publicadas; essa verificação continua pendente.

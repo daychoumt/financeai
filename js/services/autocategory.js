@@ -5,6 +5,9 @@
 
 const AutoCategory = (() => {
 
+  let _cleanup = () => {};
+  function destroy() { _cleanup(); _cleanup = () => {}; }
+
   /* Mapa de palavras-chave → categoria */
   const RULES = {
     'Alimentação': [
@@ -95,13 +98,14 @@ const AutoCategory = (() => {
    * Quando o usuário para de digitar, sugere a categoria automaticamente.
    */
   function init() {
+    destroy();
     const descInput = document.getElementById('tx-desc');
     const catSelect = document.getElementById('tx-category');
     if (!descInput || !catSelect) return;
 
     let debounce = null;
 
-    descInput.addEventListener('input', () => {
+    const onInput = () => {
       clearTimeout(debounce);
       debounce = setTimeout(() => {
         const desc      = descInput.value.trim();
@@ -116,7 +120,12 @@ const AutoCategory = (() => {
           _showSuggestionHint(suggested);
         }
       }, 400);
-    });
+    };
+    descInput.addEventListener('input', onInput);
+    _cleanup = () => {
+      clearTimeout(debounce);
+      descInput.removeEventListener('input', onInput);
+    };
   }
 
   function _showSuggestionHint(category) {
@@ -135,6 +144,7 @@ const AutoCategory = (() => {
     setTimeout(() => { if (hint) hint.remove(); }, 3000);
   }
 
-  return { suggest, init };
+  return { suggest, init, destroy };
 
 })();
+
