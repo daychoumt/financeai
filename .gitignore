@@ -3,3 +3,6 @@ node_modules/
 .secret.local
 *-debug.log
 .firebase/
+
+.dev.vars*
+.wrangler/

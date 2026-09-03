@@ -1,4 +1,0 @@
-{
-  "functions": [{"source": "functions", "codebase": "financeai", "runtime": "nodejs22", "ignore": ["node_modules", ".env*", "*.log"]}],
-  "firestore": {"rules": "firestore.rules"}
-}

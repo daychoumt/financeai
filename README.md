@@ -4,7 +4,7 @@ Controle financeiro pessoal em HTML, CSS e JavaScript, com autenticação Fireba
 
 [Acessar o site](https://daychoumt.github.io/financeai/) · [Configurar o projeto](SETUP.md) · [Revisão e próximas etapas](docs/REVISAO-TECNICA.md)
 
-> **Estado desta versão:** o assistente agora possui cliente e backend autenticado. Para responder no site, ainda é necessário cadastrar uma nova chave privada e publicar a função Firebase. Siga o [guia de ativação](docs/AI-SETUP.md). Uma branch ou pull request não altera automaticamente a versão publicada no GitHub Pages.
+> **Estado desta versão:** o assistente agora possui cliente e backend autenticado no Cloudflare Workers, compatível com Firebase Spark. Para responder no site, ainda é necessário cadastrar uma nova chave privada e publicar o Worker Cloudflare (plano gratuito). Siga o [guia de ativação](docs/AI-SETUP.md). Uma branch ou pull request não altera automaticamente a versão publicada no GitHub Pages.
 
 ## Recursos implementados no código
 

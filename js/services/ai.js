@@ -7,6 +7,8 @@ const AIService = (() => {
     if (typeof message !== 'string' || !message.trim() || message.length > 2000) throw new Error('Digite uma pergunta de até 2.000 caracteres.');
     const user = Auth.currentUser;
     if (!user) throw new Error('Entre na sua conta para conversar.');
+    const endpoint = typeof AI_CONFIG !== 'undefined' ? AI_CONFIG.endpoint : '';
+    if (!/^https:\/\//.test(endpoint)) throw new Error('O assistente ainda precisa ser ativado. Configure a URL do Worker.');
     const version = generation;
     const controller = new AbortController();
     pending = controller;
@@ -15,7 +17,7 @@ const AIService = (() => {
     try {
       const token = await user.getIdToken();
       if (!current()) throw new Error('Conversa interrompida.');
-      const response = await fetch(`https://us-central1-${FIREBASE_CONFIG.projectId}.cloudfunctions.net/financeChat`, {
+      const response = await fetch(endpoint, {
         method: 'POST', signal: controller.signal,
         headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
         body: JSON.stringify({message: message.trim(), context: shareContext ? context.slice(0, 12000) : ''})

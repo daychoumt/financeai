@@ -6,13 +6,13 @@ const source = fs.readFileSync(require('node:path').join(__dirname, '../js/servi
 function client(fetch) {
   const user = {getIdToken: async () => 'test-token'};
   const Auth = {currentUser: user};
-  const ai = vm.runInNewContext(source + '\nAIService;', {Auth, FIREBASE_CONFIG: {projectId: 'test'}, fetch, AbortController, setTimeout, clearTimeout});
+  const ai = vm.runInNewContext(source + '\nAIService;', {Auth, AI_CONFIG: {endpoint: 'https://test.workers.dev/chat'}, fetch, AbortController, setTimeout, clearTimeout});
   return {ai, Auth};
 }
 test('contexto somente enviado com consentimento; token enviado ao backend', async () => {
   const bodies = [];
   const {ai} = client(async (url, options) => {
-    assert.match(url, /cloudfunctions.net\/financeChat$/);
+    assert.match(url, /workers.dev\/chat$/);
     assert.equal(options.headers.Authorization, 'Bearer test-token');
     bodies.push(JSON.parse(options.body));
     return {ok: true, json: async () => ({reply: 'Olá'})};
@@ -50,4 +50,9 @@ test('sem login não envia; pergunta vazia também recusada', async () => {
 });
 test('cliente não contém chave nem endpoint direto Gemini e renderiza texto', () => {
   assert.doesNotMatch(source, /AIza[\w-]{20,}|generativelanguage\.googleapis\.com|GEMINI_API_KEY|innerHTML/);
+});
+test('endpoint não configurado bloqueia envio e informa ativação', async()=>{
+ let calls=0;
+ const ai=vm.runInNewContext(source+'\nAIService;',{Auth:{currentUser:{}},AI_CONFIG:{endpoint:''},fetch:()=>{calls++;}});
+ await assert.rejects(ai.chat('Oi'),/ativado/);assert.equal(calls,0);
 });

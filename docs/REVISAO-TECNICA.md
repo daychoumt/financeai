@@ -18,7 +18,7 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 1. Revogar a credencial Gemini anteriormente publicada no Google AI Studio e conferir seu uso no provedor. Não testar nem compartilhar a chave exposta.
 2. Integrar e publicar as alterações após revisão. Até isso ocorrer, a versão pública continua com o código anterior.
 3. Conferir as regras efetivamente publicadas no Firestore e testar usuário A, usuário B e acesso sem autenticação em desenvolvimento.
-4. Ativar o backend implementado seguindo [AI-SETUP.md](AI-SETUP.md): cadastrar segredo novo, revisar regras e publicar a função. A integração ao vivo permanece não validada.
+4. Ativar o backend implementado seguindo [AI-SETUP.md](AI-SETUP.md): cadastrar segredo novo e publicar o Worker Cloudflare. A integração ao vivo permanece não validada.
 
 ## Próximas correções identificadas
 
@@ -55,4 +55,6 @@ Validação: 28 testes locais com Node.js, incluindo testes unitários com Fireb
 
 ## Integração IA
 
-Cliente e backend Firebase adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 35 testes passando; serviços externos são simulados. A função ainda não foi publicada nem testada com uma chave real.
+Cliente e backend Cloudflare Workers adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 37 testes passando; serviços externos são simulados. O Worker ainda não foi publicado nem testada com uma chave real.
+
+A implementação Cloud Functions que exigia Blaze foi substituída por Worker com quotas em Durable Object SQLite. Firebase Spark permanece para login e dados. A URL pública do Worker deve ser cadastrada em `js/ai-config.js`. Nenhuma implantação ou configuração de segredo foi realizada.
