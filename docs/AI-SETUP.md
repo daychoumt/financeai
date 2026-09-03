@@ -82,3 +82,23 @@ npx wrangler@4 deploy --dry-run
 Os testes usam respostas simuladas; verificam autenticação, consentimento, cancelamento, quotas, conteúdo inválido, CORS e contrato Gemini. O dry-run valida empacotamento e bindings, sem publicar. A resposta autenticada do Gemini ainda precisa ser validada após a ativação. A consulta de autenticação foi verificada com um token deliberadamente inválido, sem ler contas ou dados de usuários.
 
 Referências: [Workers Free](https://developers.cloudflare.com/workers/platform/limits/), [Durable Objects Free/SQLite](https://developers.cloudflare.com/durable-objects/platform/pricing/), [Firebase Auth REST](https://firebase.google.com/docs/reference/rest/auth), [Gemini gratuito](https://ai.google.dev/gemini-api/docs/billing), [uso dos dados](https://ai.google.dev/gemini-api/docs/pricing).
+
+## Diagnosticar falha na conversa
+
+O chat exibe códigos estáveis sem mostrar a resposta bruta do provedor ou credenciais:
+
+| Código | Verificação |
+| --- | --- |
+| `AI_KEY_MISSING` | Aplicar o segredo Gemini à versão publicada do Worker. |
+| `AI_KEY_REJECTED` | Chave recusada: conferir nova chave no AI Studio e atualizar o segredo. |
+| `AI_PROVIDER_PERMISSION` | Permissões da chave/projeto para usar Gemini. |
+| `AI_MODEL_UNAVAILABLE` | Disponibilidade do modelo configurado. |
+| `AI_PROVIDER_QUOTA` | Cota do modelo/projeto no Google; diferente da quota do app. |
+| `AI_AUTH_CONFIG` / `AI_AUTH_UNAVAILABLE` | Configuração Firebase ou disponibilidade da verificação do login. |
+| `AI_QUOTA_CONFIG` / `AI_QUOTA_UNAVAILABLE` | Binding e funcionamento do Durable Object. |
+| `AI_APP_QUOTA` | Limite de uso do aplicativo atingido. |
+| `AI_EMPTY_RESPONSE` | Gemini respondeu sem texto utilizável. |
+| `AI_TIMEOUT` | Uma etapa excedeu o tempo de espera. |
+| `HTTP_403` / `HTTP_503` | Bloqueio ou resposta sem código conhecido; conferir somente o status/corpo sanitizado. |
+
+Compartilhe apenas o código mostrado na interface. Nunca publique o cabeçalho Authorization, tokens, arquivos HAR sem sanitização ou valores de segredos. No Gemini 2.5 Flash, a consulta curta usa thinkingBudget zero para reservar o orçamento de saída para o texto final. Outros modelos mantêm sua configuração padrão.

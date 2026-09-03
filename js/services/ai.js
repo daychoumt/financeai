@@ -1,3 +1,21 @@
+// Stable, public support codes. Never display arbitrary upstream error text.
+const AI_ERROR_MESSAGES = Object.freeze({
+  AI_KEY_MISSING: 'A chave da IA ainda não foi aplicada ao servidor publicado.',
+  AI_KEY_REJECTED: 'O Gemini recusou a chave cadastrada. É necessário revisar a chave no servidor.',
+  AI_PROVIDER_PERMISSION: 'O projeto ou a chave não tem permissão para usar o Gemini.',
+  AI_MODEL_UNAVAILABLE: 'O modelo de IA configurado não está disponível.',
+  AI_PROVIDER_QUOTA: 'A cota do Gemini foi atingida ou não está disponível para este modelo.',
+  AI_PROVIDER_REQUEST: 'O Gemini recusou a configuração da consulta.',
+  AI_PROVIDER_UNAVAILABLE: 'O serviço Gemini não respondeu corretamente. Tente mais tarde.',
+  AI_AUTH_CONFIG: 'A identificação do Firebase está incompleta no servidor.',
+  AI_AUTH_UNAVAILABLE: 'Não foi possível verificar o login no servidor.',
+  AI_QUOTA_CONFIG: 'O controle de uso da IA ainda precisa ser configurado.',
+  AI_QUOTA_UNAVAILABLE: 'O controle de uso da IA está indisponível.',
+  AI_APP_QUOTA: 'Você atingiu o limite de uso do aplicativo. Tente mais tarde.',
+  AI_RESPONSE_BLOCKED: 'O Gemini não respondeu a essa pergunta. Reformule e tente novamente.',
+  AI_EMPTY_RESPONSE: 'O Gemini retornou uma resposta sem texto. Tente novamente.',
+  AI_TIMEOUT: 'A consulta demorou demais. Tente novamente.'
+});
 const AIService = (() => {
   let context = '', generation = 0, pending = null;
   function setContext(value) { context = typeof value === 'string' ? value : ''; }
@@ -24,9 +42,15 @@ const AIService = (() => {
       });
       if (!current()) throw new Error('Conversa interrompida.');
       if (response.status === 404) throw new Error('O assistente ainda precisa ser ativado no servidor.');
-      const data = await response.json();
+      let data;
+      try { data = await response.json(); }
+      catch { throw new Error(`O servidor recusou a conexão ou retornou uma resposta inválida. [HTTP_${response.status}]`); }
       if (!current()) throw new Error('Conversa interrompida.');
-      if (!response.ok) throw new Error(({401: 'Sua sessão expirou. Entre novamente.', 429: 'Limite de uso atingido. Tente mais tarde.'})[response.status] || 'A IA está indisponível no momento. Tente mais tarde.');
+      if (!response.ok) {
+        const code = Object.hasOwn(AI_ERROR_MESSAGES, data.code) ? data.code : `HTTP_${response.status}`;
+        const message = AI_ERROR_MESSAGES[code] || ({401:'Sua sessão expirou. Entre novamente.',403:'O servidor bloqueou o acesso à IA.',429:'Limite de uso atingido. Tente mais tarde.'})[response.status] || 'A consulta falhou no servidor.';
+        throw new Error(`${message} [${code}]`);
+      }
       if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('A IA não retornou uma resposta.');
       return data.reply;
     } catch (error) {

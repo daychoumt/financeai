@@ -71,3 +71,32 @@ test('Gemini recebe chave somente no servidor, contexto e pergunta; erros tratad
  await assert.rejects(generate({message:'Oi'},env(),async()=>new Response('{}',{status:429})),{status:429});
  await assert.rejects(generate({message:'Oi'},env(),async()=>Response.json({})),{status:502});
 });
+test('diagnóstico separa configuração incompleta e falha do contador', async()=>{
+ const {handle}=await modulePromise;
+ for(const [key,code] of [['GEMINI_API_KEY','AI_KEY_MISSING'],['FIREBASE_WEB_API_KEY','AI_AUTH_CONFIG'],['CHAT_QUOTA','AI_QUOTA_CONFIG']]) {
+  const e=env();delete e[key];const response=await handle(req(),e);
+  assert.equal(response.status,503);assert.equal((await response.json()).code,code);
+ }
+ const e=env();e.CHAT_QUOTA.get=()=>({fetch:async()=>{throw Error('private-value');}});
+ const response=await handle(req(),e,{authenticate:async()=>'u'});const body=await response.json();
+ assert.equal(body.code,'AI_QUOTA_UNAVAILABLE');assert.doesNotMatch(JSON.stringify(body),/private-value/);
+});
+test('diagnóstico Gemini distingue chave, permissão, modelo, quota e provedor sem vazar erro',async()=>{
+ const {handle,generate}=await modulePromise;
+ for(const [status,payload,code] of [
+  [400,{error:{message:'private-key',details:[{reason:'API_KEY_INVALID'}]}},'AI_KEY_REJECTED'],
+  [403,{error:{message:'private-key'}},'AI_PROVIDER_PERMISSION'],
+  [404,{},'AI_MODEL_UNAVAILABLE'],[429,{},'AI_PROVIDER_QUOTA'],
+  [400,{},'AI_PROVIDER_REQUEST'],[500,{},'AI_PROVIDER_UNAVAILABLE']
+ ]) {
+  const response=await handle(req(),env(),{authenticate:async()=>'u',generate:(input,e)=>generate(input,e,async()=>Response.json(payload,{status}))});
+  const body=await response.json();assert.equal(body.code,code);assert.doesNotMatch(JSON.stringify(body),/private-key/);
+ }
+});
+test('resposta curta reserva tokens para texto e identifica resposta vazia',async()=>{
+ const {generate}=await modulePromise;
+ await assert.rejects(generate({message:'Oi'},env(),async(url,options)=>{
+  assert.equal(JSON.parse(options.body).generationConfig.thinkingConfig.thinkingBudget,0);
+  return Response.json({candidates:[{content:{parts:[]},finishReason:'MAX_TOKENS'}]});
+ }),{code:'AI_EMPTY_RESPONSE'});
+});

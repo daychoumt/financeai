@@ -56,3 +56,13 @@ test('endpoint não configurado bloqueia envio e informa ativação', async()=>{
  const ai=vm.runInNewContext(source+'\nAIService;',{Auth:{currentUser:{}},AI_CONFIG:{endpoint:''},fetch:()=>{calls++;}});
  await assert.rejects(ai.chat('Oi'),/ativado/);assert.equal(calls,0);
 });
+test('cliente mostra código seguro do servidor e ignora texto arbitrário',async()=>{
+ const {ai}=client(async()=>({ok:false,status:503,json:async()=>({code:'AI_KEY_MISSING',error:'private-value'})}));
+ await assert.rejects(ai.chat('Oi'),error=>{assert.match(error.message,/AI_KEY_MISSING/);assert.doesNotMatch(error.message,/private-value/);return true;});
+ const other=client(async()=>({ok:false,status:503,json:async()=>({code:'private-value',error:'private-value'})})).ai;
+ await assert.rejects(other.chat('Oi'),error=>{assert.match(error.message,/HTTP_503/);assert.doesNotMatch(error.message,/private-value/);return true;});
+});
+test('resposta HTML de bloqueio mostra status sem renderizar corpo',async()=>{
+ const {ai}=client(async()=>({ok:false,status:403,json:async()=>{throw Error('<html>private</html>');}}));
+ await assert.rejects(ai.chat('Oi'),error=>{assert.match(error.message,/HTTP_403/);assert.doesNotMatch(error.message,/private/);return true;});
+});

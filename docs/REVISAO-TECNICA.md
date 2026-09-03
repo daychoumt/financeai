@@ -55,6 +55,8 @@ Validação: 28 testes locais com Node.js, incluindo testes unitários com Fireb
 
 ## Integração IA
 
-Cliente e backend Cloudflare Workers adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 37 testes passando; serviços externos são simulados. O Worker foi publicado; uma resposta autenticada do Gemini ainda não foi validada.
+Cliente e backend Cloudflare Workers adicionados com segredo de servidor, validação de token revogado, quotas transacionais por usuário e globais, resumo opcional, timeout e cancelamento de sessão. Cada pergunta é independente. A suíte atual tem 42 testes passando; serviços externos são simulados. O Worker foi publicado; uma resposta autenticada do Gemini ainda não foi validada.
 
 A implementação Cloud Functions que exigia Blaze foi substituída por Worker com quotas em Durable Object SQLite. Firebase Spark permanece para login e dados. A URL pública foi configurada em `js/ai-config.js`. O proprietário cadastrou o segredo Gemini no painel; o valor não foi lido pela automação. O identificador público Firebase Web foi configurado no Worker e aceito pelo endpoint Auth REST, que rejeitou um token inválido de teste.
+
+O primeiro teste do proprietário recebeu HTTP 503. A causa exata permanece pendente de diagnóstico autenticado. Cliente e Worker agora distinguem falhas de configuração, autenticação, quota e Gemini com códigos públicos seguros; respostas arbitrárias do provedor não são exibidas.
