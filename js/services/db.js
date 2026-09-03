@@ -6,21 +6,35 @@
 
 const DBService = (() => {
 
+  let _sessionVersion = 0;
   let _uid = null; // UID do utilizador atual
+
+  function userRef() {
+    if (!_uid || Auth.currentUser?.uid !== _uid) {
+      throw new Error('Sessão encerrada. Entre novamente.');
+    }
+    return DB.collection('users').doc(_uid);
+  }
+
+  function assertSession(version) {
+    if (version !== _sessionVersion) throw new Error('Sessão encerrada. Entre novamente.');
+    userRef();
+  }
 
   /* ─── Referências de coleções ─── */
   const col = {
-    user:          () => DB.collection('users').doc(_uid),
-    transactions:  () => DB.collection('users').doc(_uid).collection('transactions'),
-    goals:         () => DB.collection('users').doc(_uid).collection('goals'),
-    subscriptions: () => DB.collection('users').doc(_uid).collection('subscriptions'),
-    snapshots:     () => DB.collection('users').doc(_uid).collection('snapshots'),
+    user:          () => userRef(),
+    transactions:  () => userRef().collection('transactions'),
+    goals:         () => userRef().collection('goals'),
+    subscriptions: () => userRef().collection('subscriptions'),
+    snapshots:     () => userRef().collection('snapshots'),
   };
 
   /* ─────────────────────────────────────────
      INIT — define o UID do utilizador
   ───────────────────────────────────────── */
   function init(uid) {
+    ++_sessionVersion;
     _uid = uid;
   }
 
@@ -30,19 +44,23 @@ const DBService = (() => {
 
   /** Carrega o documento do utilizador (settings, categories, limits) */
   async function loadUserDoc() {
-    const snap = await col.user().get();
+    const version = _sessionVersion;
+    const ref = col.user();
+    const user = Auth.currentUser;
+    const snap = await ref.get();
+    assertSession(version);
     if (snap.exists) return snap.data();
 
     // Cria documento padrão se não existir (ex: login Google na 1ª vez)
     const defaultDoc = {
-      name:       Auth.currentUser?.displayName || '',
-      email:      Auth.currentUser?.email || '',
+      name:       user?.displayName || '',
+      email:      user?.email || '',
       createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
       categories: [...DEFAULT_CATEGORIES],
       limits:     {},
       settings:   { theme: 'dark' }
     };
-    await col.user().set(defaultDoc);
+    await ref.set(defaultDoc);
     return defaultDoc;
   }
 
@@ -204,6 +222,8 @@ const DBService = (() => {
   ───────────────────────────────────────── */
 
   async function clearAllData() {
+    const version = _sessionVersion;
+    const user = col.user();
     // Apaga todas as sub-coleções em batch
     const collections = [
       col.transactions(), col.goals(),
@@ -211,14 +231,17 @@ const DBService = (() => {
     ];
 
     for (const ref of collections) {
+      assertSession(version);
       const snap = await ref.get();
+      assertSession(version);
       const batch = DB.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
       if (snap.docs.length > 0) await batch.commit();
     }
 
     // Reseta o documento do utilizador
-    await col.user().update({
+    assertSession(version);
+    await user.update({
       limits: {},
       categories: [...DEFAULT_CATEGORIES]
     });
@@ -249,3 +272,4 @@ const DBService = (() => {
   };
 
 })();
+

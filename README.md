@@ -16,7 +16,7 @@ Controle financeiro pessoal em HTML, CSS e JavaScript, com autenticação Fireba
 - Exportação das transações carregadas em CSV e relatório para impressão/PDF.
 - Temas claro e escuro e layout adaptativo.
 
-A existência desses fluxos no código não substitui testes de integração no Firebase. Importação CSV, histórico, sessões e instalação/offline têm pendências na [revisão técnica](docs/REVISAO-TECNICA.md).
+A existência desses fluxos no código não substitui testes de integração no Firebase. Importação CSV, histórico, validação de sessões no Firebase e instalação/offline têm pendências na [revisão técnica](docs/REVISAO-TECNICA.md).
 
 ## Organização
 
@@ -57,7 +57,7 @@ node --test tests/*.test.cjs
 
 Também disponível por `npm test`. O workflow `Testes` executa a suíte em pull requests e atualizações de `main`.
 
-A suíte cobre precisão do resumo, categorias, valores legados inválidos, soma de assinaturas, suspensão do chat sem envio de dados e sintaxe dos scripts. Não verifica autenticação real, regras publicadas no Firestore, aparência no navegador ou disponibilidade do site.
+A suíte cobre precisão do resumo, categorias, valores legados inválidos, soma de assinaturas, suspensão do chat sem envio de dados, limpeza e troca de sessão, respostas atrasadas e sintaxe dos scripts. Não verifica autenticação real, regras publicadas no Firestore, aparência no navegador ou disponibilidade do site.
 
 ## Segurança
 

@@ -25,8 +25,6 @@ Revisão do código disponível no GitHub. Não foram acessados dados de usuári
 | Prioridade | Evidência no código | Critério de conclusão |
 | --- | --- | --- |
 | Alta | Alguns textos de categorias, metas, alertas e relatórios entram em `innerHTML` ou `document.write` | Renderização como texto ou escape adequado, com testes para caracteres HTML |
-| Alta | `destroy()` troca `_state`, mas `window._appState` mantém a referência antiga; limpeza depende do caminho de logout | Encerramento/troca de sessão remove referências antigas e bloqueia callbacks da conta anterior |
-| Alta | `showApp()` define `display` inline; `showAuthScreen()` só altera `hidden` | Login/logout alternam telas sem exibir conteúdo da sessão anterior |
 | Alta | Importação divide colunas sem respeitar aspas; exportação usa outra posição para o valor | CSV exportado pode ser reimportado sem alterar tipos, centavos, datas ou textos |
 | Média | Gravações em `db.js` não validam todos os campos | Valores não finitos, tipos inválidos e datas impossíveis são recusados |
 | Média | UI carrega o mês atual; histórico depende de snapshots e uma leitura é limitada a 500 registros | Navegação mensal e escopo da exportação explícitos, com testes |
@@ -40,3 +38,17 @@ Essas pendências não foram corrigidas nesta etapa. O aplicativo inteiro não d
 - [Proteção de chaves Gemini](https://ai.google.dev/gemini-api/docs/api-key)
 - [Authentication e Security Rules](https://firebase.google.com/docs/rules/rules-and-auth)
 - [Publicação de regras do Firestore](https://firebase.google.com/docs/firestore/security/get-started)
+
+
+## Etapa 2 — sessão e tela de autenticação
+
+- Logout e troca de conta limpam estado exportável, dados renderizados, rascunhos, confirmações e listeners.
+- Leituras e callbacks antigos são descartados por versão de sessão, inclusive ao entrar novamente na mesma conta.
+- Criação de perfil captura a referência original e é interrompida se a sessão mudar antes da gravação.
+- Operações no cliente recusam UID ausente ou diferente do usuário autenticado. Isso não substitui Security Rules.
+- Uma importação em andamento interrompe as próximas gravações ao mudar de conta; o parser CSV continua pendente.
+- Conclusões de operações da conta anterior não atualizam a interface nem apagam o estado da nova conta.
+- Falha ao sair mantém a sessão ativa e apresenta uma mensagem para tentar novamente.
+- Login, cadastro e recuperação usam formulários nativos, labels associados, mensagens acessíveis e controles maiores. CSS restrito à autenticação mantém o layout das páginas internas.
+
+Validação: 28 testes locais com Node.js, incluindo testes unitários com Firebase e DOM simulados. Também foi conferida a estrutura HTML dos três formulários. Não houve teste visual, login real ou verificação das regras publicadas no Firebase. O bloqueio da sessão no cliente não revoga gravações já enviadas ao servidor nem limpa o cache persistente do Firestore.

@@ -21,11 +21,26 @@ const AppController = (() => {
 
   /* Listeners do Firestore (para cancelar no logout) */
   let _unsubscribers = [];
+  let _sessionVersion = 0;
+
+  // Guarda apenas a interface inicial, antes de qualquer dado de usuário.
+  const _sessionTemplates = [...document.querySelectorAll('#app-screen, .modal-overlay')]
+    .map(element => ({ element, template: element.cloneNode(true) }));
+
+  function sessionIsActive(state) {
+    return state === _state && state.uid && Auth.currentUser?.uid === state.uid;
+  }
+
+  function isCurrentSession(version, uid) {
+    return version === _sessionVersion && _state.uid === uid && Auth.currentUser?.uid === uid;
+  }
 
   /* ─────────────────────────────────────────
      INIT — chamado após autenticação
   ───────────────────────────────────────── */
   async function init(user) {
+    destroy();
+    const version = _sessionVersion;
     _state.uid         = user.uid;
     _state.currentMonth = fmt.currentMonth();
 
@@ -44,6 +59,7 @@ const AppController = (() => {
     try {
       // Carrega configurações do utilizador
       const userDoc = await DBService.loadUserDoc();
+      if (!isCurrentSession(version, user.uid)) return;
       _state.categories = userDoc.categories || [...DEFAULT_CATEGORIES];
       _state.limits     = userDoc.limits     || {};
       _state.settings   = userDoc.settings   || { theme: 'dark' };
@@ -59,7 +75,9 @@ const AppController = (() => {
       renderCategoryChips(_state.categories, '_deleteCategoryHandler');
 
       // Carrega snapshots históricos
-      _state.snapshots = await DBService.loadSnapshots();
+      const snapshots = await DBService.loadSnapshots();
+      if (!isCurrentSession(version, user.uid)) return;
+      _state.snapshots = snapshots;
 
       // Define data padrão no modal de transação
       const dateInput = document.getElementById('tx-date');
@@ -74,7 +92,7 @@ const AppController = (() => {
       // NotificationService.requestPermission();
 
       // Inicia listeners em tempo real
-      _startListeners();
+      _startListeners(version, user.uid);
 
       // Esconde loading screen
       hideLoading();
@@ -85,6 +103,8 @@ const AppController = (() => {
       navigate(lastPage, btn);
 
     } catch (err) {
+      if (!isCurrentSession(version, user.uid)) return;
+      hideLoading();
       console.error('Erro ao inicializar app:', err);
       showToast('Erro ao carregar dados. Verifique sua conexão.', 'error');
     }
@@ -93,15 +113,17 @@ const AppController = (() => {
   /* ─────────────────────────────────────────
      LISTENERS EM TEMPO REAL
   ───────────────────────────────────────── */
-  function _startListeners() {
+  function _startListeners(version, uid) {
     // Transações do mês atual
     const unsubTx = DBService.listenTransactions(_state.currentMonth, txs => {
+      if (!isCurrentSession(version, uid)) return;
       _state.transactions = txs;
       _refreshAll();
     });
 
     // Metas
     const unsubGoals = DBService.listenGoals(goals => {
+      if (!isCurrentSession(version, uid)) return;
       _state.goals = goals;
       PagesService.renderGoals(goals);
       _refreshAIContext();
@@ -109,6 +131,7 @@ const AppController = (() => {
 
     // Assinaturas
     const unsubSubs = DBService.listenSubscriptions(subs => {
+      if (!isCurrentSession(version, uid)) return;
       _state.subscriptions = subs;
       PagesService.renderSubscriptions(subs);
       _refreshAIContext();
@@ -168,6 +191,8 @@ const AppController = (() => {
      ADICIONAR TRANSAÇÃO
   ───────────────────────────────────────── */
   async function handleAddTransaction() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const desc   = document.getElementById('tx-desc')?.value?.trim();
     const amount = parseFloat(document.getElementById('tx-amount')?.value);
     const type   = document.getElementById('tx-type')?.value || 'saida';
@@ -180,10 +205,12 @@ const AppController = (() => {
 
     try {
       await DBService.addTransaction({ desc, amount, type, category: cat, date, note });
+      if (!sessionIsActive(session)) return;
       closeModal('modal-add-tx');
       _clearTransactionForm();
       showToast('Transação adicionada!', 'success');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       console.error(err);
       showToast('Erro ao salvar transação.', 'error');
     }
@@ -206,10 +233,14 @@ const AppController = (() => {
      REMOVER TRANSAÇÃO
   ───────────────────────────────────────── */
   async function deleteTransaction(id) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     try {
       await DBService.deleteTransaction(id);
+      if (!sessionIsActive(session)) return;
       showToast('Transação removida.', 'info');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       showToast('Erro ao remover transação.', 'error');
     }
   }
@@ -218,6 +249,8 @@ const AppController = (() => {
      LIMITES POR CATEGORIA
   ───────────────────────────────────────── */
   async function handleSetLimit() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const cat = document.getElementById('limit-cat-sel')?.value;
     const val = parseFloat(document.getElementById('limit-val-inp')?.value);
 
@@ -228,18 +261,23 @@ const AppController = (() => {
 
     try {
       await DBService.updateUserDoc({ limits: _state.limits });
+      if (!sessionIsActive(session)) return;
       document.getElementById('limit-val-inp').value = '';
       const catData = FinanceService.calcByCategory(_state.transactions);
       PagesService.renderLimits(_state.limits, catData);
       showToast(`Limite de "${cat}" definido!`, 'success');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       showToast('Erro ao salvar limite.', 'error');
     }
   }
 
   async function removeLimit(cat) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     delete _state.limits[cat];
     await DBService.updateUserDoc({ limits: _state.limits });
+    if (!sessionIsActive(session)) return;
     const catData = FinanceService.calcByCategory(_state.transactions);
     PagesService.renderLimits(_state.limits, catData);
     showToast(`Limite de "${cat}" removido.`, 'info');
@@ -249,6 +287,8 @@ const AppController = (() => {
      METAS
   ───────────────────────────────────────── */
   async function handleAddGoal() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const name   = document.getElementById('goal-name')?.value?.trim();
     const target = parseFloat(document.getElementById('goal-target')?.value);
     const saved  = parseFloat(document.getElementById('goal-saved')?.value) || 0;
@@ -259,6 +299,7 @@ const AppController = (() => {
 
     try {
       await DBService.addGoal({ name, target, saved, icon });
+      if (!sessionIsActive(session)) return;
       closeModal('modal-add-goal');
       ['goal-name','goal-target','goal-saved','goal-icon'].forEach(id => {
         const el = document.getElementById(id);
@@ -266,23 +307,31 @@ const AppController = (() => {
       });
       showToast('Meta criada!', 'success');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       showToast('Erro ao criar meta.', 'error');
     }
   }
 
   async function deleteGoal(id) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     confirmAction('Remover esta meta permanentemente?', async () => {
+      if (!sessionIsActive(session)) return;
       await DBService.deleteGoal(id);
+      if (!sessionIsActive(session)) return;
       showToast('Meta removida.', 'info');
     });
   }
 
   async function addToGoal(id, currentSaved, target) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const amount = parseFloat(prompt(`Quanto depositar na meta?\n(Já guardado: ${fmt.currency(currentSaved)})`));
     if (!amount || amount <= 0) return;
 
     const newSaved = Math.min(currentSaved + amount, target);
     await DBService.updateGoal(id, { saved: newSaved });
+    if (!sessionIsActive(session)) return;
     showToast(`${fmt.currency(amount)} depositado!`, 'success');
   }
 
@@ -290,6 +339,8 @@ const AppController = (() => {
      ASSINATURAS
   ───────────────────────────────────────── */
   async function handleAddSubscription() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const name     = document.getElementById('sub-name')?.value?.trim();
     const price    = parseFloat(document.getElementById('sub-price')?.value);
     const day      = parseInt(document.getElementById('sub-day')?.value) || 1;
@@ -300,6 +351,7 @@ const AppController = (() => {
 
     try {
       await DBService.addSubscription({ name, price, day, category });
+      if (!sessionIsActive(session)) return;
       closeModal('modal-add-sub');
       ['sub-name','sub-price','sub-day'].forEach(id => {
         const el = document.getElementById(id);
@@ -307,12 +359,16 @@ const AppController = (() => {
       });
       showToast('Assinatura adicionada!', 'success');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       showToast('Erro ao adicionar assinatura.', 'error');
     }
   }
 
   async function deleteSubscription(id) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     await DBService.deleteSubscription(id);
+    if (!sessionIsActive(session)) return;
     showToast('Assinatura removida.', 'info');
   }
 
@@ -320,6 +376,8 @@ const AppController = (() => {
      CATEGORIAS (Configurações)
   ───────────────────────────────────────── */
   async function handleAddCategory() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const input = document.getElementById('new-cat-input');
     const name  = input?.value?.trim();
     if (!name) return;
@@ -331,6 +389,7 @@ const AppController = (() => {
 
     _state.categories.push(name);
     await DBService.updateUserDoc({ categories: _state.categories });
+    if (!sessionIsActive(session)) return;
     populateCategorySelects(_state.categories);
     renderCategoryChips(_state.categories, '_deleteCategoryHandler');
     input.value = '';
@@ -339,6 +398,8 @@ const AppController = (() => {
 
   /* Handler de remoção de categoria (passado como string para o HTML) */
   window._deleteCategoryHandler = async function(cat) {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     const defaults = DEFAULT_CATEGORIES;
     if (defaults.includes(cat)) {
       showToast('Não é possível remover categorias padrão.', 'error');
@@ -347,6 +408,7 @@ const AppController = (() => {
 
     _state.categories = _state.categories.filter(c => c !== cat);
     await DBService.updateUserDoc({ categories: _state.categories });
+    if (!sessionIsActive(session)) return;
     populateCategorySelects(_state.categories);
     renderCategoryChips(_state.categories, '_deleteCategoryHandler');
     showToast(`Categoria "${cat}" removida.`, 'info');
@@ -356,8 +418,11 @@ const AppController = (() => {
      LIMPAR TODOS OS DADOS
   ───────────────────────────────────────── */
   async function clearAllData() {
+    const session = _state;
+    if (!sessionIsActive(session)) return;
     try {
       await DBService.clearAllData();
+      if (!sessionIsActive(session)) return;
       _state.transactions  = [];
       _state.goals         = [];
       _state.subscriptions = [];
@@ -367,6 +432,7 @@ const AppController = (() => {
       _refreshAll();
       showToast('Todos os dados foram apagados.', 'info');
     } catch (err) {
+      if (!sessionIsActive(session)) return;
       showToast('Erro ao apagar dados.', 'error');
     }
   }
@@ -375,6 +441,8 @@ const AppController = (() => {
      DESTROY — chamado no logout
   ───────────────────────────────────────── */
   function destroy() {
+    ++_sessionVersion;
+    DBService.init(null);
     // Cancela todos os listeners do Firestore
     _unsubscribers.forEach(unsub => {
       try { unsub(); } catch(e) {}
@@ -386,6 +454,8 @@ const AppController = (() => {
 
     // Limpa histórico do chat
     AIService.clearHistory();
+    AIService.setContext('');
+    if (typeof AutoCategory !== 'undefined') AutoCategory.destroy();
 
     // Reset do estado
     _state = {
@@ -393,6 +463,17 @@ const AppController = (() => {
       snapshots: [], categories: [...DEFAULT_CATEGORIES],
       limits: {}, settings: { theme: 'dark' }, currentMonth: fmt.currentMonth()
     };
+    window._appState = _state;
+
+    // Descarta também dados renderizados, rascunhos e confirmações antigas.
+    _sessionTemplates.forEach(({ element, template }) => {
+      element.replaceChildren(...template.cloneNode(true).childNodes);
+      element.style.display = 'none';
+    });
+    closeSidebar();
+    const toast = document.getElementById('toast');
+    if (toast) { toast.hidden = true; toast.textContent = ''; }
+
   }
 
   /* ─────────────────────────────────────────
@@ -401,6 +482,7 @@ const AppController = (() => {
   return {
     init,
     destroy,
+    handleAddTransaction,
     applyTransactionFilters,
     deleteTransaction,
     handleSetLimit,
@@ -420,39 +502,12 @@ const AppController = (() => {
    FUNÇÕES GLOBAIS chamadas diretamente pelo HTML
 ═══════════════════════════════════════════════════════ */
 
-function handleAddTransaction()  { AppController.handleAddTransaction?.() || AppController.init; }
+function handleAddTransaction()  { return AppController.handleAddTransaction(); }
 function handleSetLimit()        { AppController.handleSetLimit(); }
 function handleAddGoal()         { AppController.handleAddGoal(); }
 function handleAddSubscription() { AppController.handleAddSubscription(); }
 function handleAddCategory()     { AppController.handleAddCategory(); }
 function clearAllData()          { AppController.clearAllData(); }
-
-// Expõe método interno para evitar erro de referência circular
-AppController.handleAddTransaction = function() {
-  // Lê os campos do modal e adiciona via DBService
-  const desc   = document.getElementById('tx-desc')?.value?.trim();
-  const amount = parseFloat(document.getElementById('tx-amount')?.value);
-  const type   = document.getElementById('tx-type')?.value || 'saida';
-  const cat    = document.getElementById('tx-category')?.value;
-  const date   = document.getElementById('tx-date')?.value || fmt.today();
-  const note   = document.getElementById('tx-note')?.value?.trim();
-
-  if (!desc)                { showToast('Insira uma descrição.',    'error'); return; }
-  if (!amount || amount <= 0) { showToast('Insira um valor válido.', 'error'); return; }
-
-  DBService.addTransaction({ desc, amount, type, category: cat, date, note })
-    .then(() => {
-      closeModal('modal-add-tx');
-      ['tx-desc','tx-amount','tx-note'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.value = '';
-      });
-      document.getElementById('tx-date').value = fmt.today();
-      document.querySelectorAll('.pill-toggle .pill').forEach((p,i) => p.classList.toggle('active', i===0));
-      document.getElementById('tx-type').value = 'saida';
-      showToast('Transação adicionada!', 'success');
-    })
-    .catch(() => showToast('Erro ao salvar transação.', 'error'));
-};
 
 /* ═══════════════════════════════════════════════════════
    FUNÇÕES GLOBAIS — Exportação, Importação, Loading
@@ -508,8 +563,12 @@ async function handleCSVFile(event) {
   const file = event.target.files?.[0];
   if (!file) return;
 
+  const session = window._appState;
+  const isCurrent = () => session?.uid && session === window._appState && Auth.currentUser?.uid === session.uid;
+  if (!isCurrent()) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
+    if (!isCurrent()) return;
     const text = e.target.result;
     const txs  = ExportService.parseCSV(text);
 
@@ -522,12 +581,14 @@ async function handleCSVFile(event) {
 
     let count = 0;
     for (const tx of txs) {
+      if (!isCurrent()) return;
       try {
         await DBService.addTransaction(tx);
         count++;
       } catch(e) { /* ignora linhas inválidas */ }
     }
 
+    if (!isCurrent()) return;
     showToast(`${count} transações importadas!`, 'success');
     event.target.value = '';
   };
@@ -549,3 +610,4 @@ AppController.applyTransactionFilters = function() {
     { search, type, cat, dateFrom, dateTo }
   );
 };
+
