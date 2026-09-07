@@ -1,24 +1,37 @@
 # Finance AI
 
-Controle financeiro pessoal em HTML, CSS e JavaScript, com autenticação Firebase e dados no Firestore. Reúne receitas, despesas, categorias, metas e assinaturas em um painel mensal.
+Aplicação web de gestão financeira pessoal desenvolvida para centralizar **receitas, despesas, categorias, metas, assinaturas e indicadores** em um único painel.
 
-[Acessar o site](https://daychoumt.github.io/financeai/) · [Configurar o projeto](SETUP.md) · [Revisão e próximas etapas](docs/REVISAO-TECNICA.md)
+O projeto combina uma interface responsiva com autenticação, persistência de dados e recursos de análise para transformar registros financeiros em uma visão clara da situação mensal do usuário.
 
-> **Estado desta versão:** o assistente agora possui cliente e backend autenticado no Cloudflare Workers, compatível com Firebase Spark. O Worker foi publicado e conectado ao endereço de produção. Para responder, a rota workers.dev deve estar habilitada e o segredo Gemini válido; a conversa autenticada ainda precisa ser verificada. Siga o [guia de ativação](docs/AI-SETUP.md). Uma branch ou pull request não altera automaticamente a versão publicada no GitHub Pages.
+[**Acessar aplicação**](https://daychoumt.github.io/financeai/) · [Configuração do projeto](SETUP.md) · [Revisão técnica](docs/REVISAO-TECNICA.md)
 
-## Recursos implementados no código
+## Destaques do projeto
 
-- Cadastro, login por e-mail/senha, login com Google e recuperação de senha.
-- Cadastro e exclusão de receitas e despesas, com filtros na lista do mês carregado.
-- Sugestão de categorias por palavras-chave, executada localmente.
-- Resumo mensal, gastos por categoria, gráficos e limites de gastos.
-- Metas financeiras e registro de assinaturas.
-- Exportação das transações carregadas em CSV e relatório para impressão/PDF.
+- Dashboard com receita, gastos, saldo e score financeiro.
+- Cadastro, edição e exclusão de receitas e despesas.
+- Organização das transações por categorias.
+- Metas financeiras e acompanhamento de assinaturas.
+- Gráficos e visão de gastos por categoria.
+- Alertas, projeções e comparação de informações financeiras.
+- Autenticação por e-mail/senha e Google.
+- Exportação de transações em CSV e relatório para impressão/PDF.
 - Temas claro e escuro e layout adaptativo.
+- Assistente integrado por backend autenticado.
 
-A existência desses fluxos no código não substitui testes de integração no Firebase. Importação CSV, histórico, validação de sessões no Firebase e instalação/offline têm pendências na [revisão técnica](docs/REVISAO-TECNICA.md).
+## Tecnologias
 
-## Organização
+- **HTML5** e **CSS3**
+- **JavaScript**
+- **Firebase Authentication**
+- **Cloud Firestore**
+- **Google Apps / Firebase Web SDK**
+- **Chart.js**
+- **Cloudflare Workers**
+- **GitHub Pages**
+- Testes com o runner nativo do **Node.js**
+
+## Arquitetura
 
 | Parte | Responsabilidade |
 | --- | --- |
@@ -26,48 +39,54 @@ A existência desses fluxos no código não substitui testes de integração no 
 | `js/auth/auth.js` | Fluxos de autenticação |
 | `js/services/db.js` | Leituras, gravações e listeners do Firestore |
 | `js/services/finance.js` | Resumo, categorias, alertas e projeções |
-| `js/services/ai.js` | Chat autenticado, resumo opcional e cancelamento ao sair |
-| `js/ui/` | Componentes, páginas e gráficos com Chart.js |
+| `js/services/ai.js` | Integração do assistente autenticado |
+| `js/ui/` | Componentes, páginas e gráficos |
 | `css/` | Estilos, temas e animações |
-| `tests/` | Testes com o runner nativo do Node.js |
-
-O resumo e os totais por categoria acumulam centavos e retornam reais para a interface. O banco mantém o formato existente; esta alteração não migra dados. Valores legados inválidos são desconsiderados nesses cálculos. A validação antes da gravação continua como próxima etapa.
-
-O score é uma heurística do próprio projeto. A previsão extrapola gastos pela média diária; ela não é gerada por IA.
+| `tests/` | Testes automatizados |
 
 ## Executar localmente
 
-1. Clone este repositório.
-2. Configure um Firebase de desenvolvimento conforme [SETUP.md](SETUP.md), usando dados fictícios.
-3. Na pasta do projeto, inicie um servidor estático:
+1. Clone o repositório.
+2. Configure um Firebase de desenvolvimento seguindo o [SETUP.md](SETUP.md).
+3. Inicie um servidor estático na pasta do projeto:
 
-```sh
+```bash
 python -m http.server 8000
 ```
 
-Abra `http://localhost:8000`. Autenticação e Firestore dependem da configuração do seu projeto e de acesso à rede. Não é necessário instalar pacotes npm para servir o aplicativo.
+4. Acesse `http://localhost:8000`.
+
+As funcionalidades que utilizam autenticação, Firestore e serviços externos dependem das respectivas configurações e acesso à rede.
 
 ## Testes
 
-Requer Node.js 22 ou superior, sem dependências externas:
+O projeto utiliza Node.js 22 ou superior e pode ser testado com:
 
-```sh
+```bash
 node --test tests/*.test.cjs
 ```
 
-Também disponível por `npm test`. O workflow `Testes` executa a suíte em pull requests e atualizações de `main`.
+ou:
 
-A suíte cobre precisão do resumo, categorias, valores legados inválidos, soma de assinaturas, chat com consentimento, autenticação e quotas do backend, limpeza e troca de sessão, respostas atrasadas e sintaxe dos scripts. Não verifica autenticação real, regras publicadas no Firestore, aparência no navegador ou disponibilidade do site.
+```bash
+npm test
+```
 
-## Segurança
+A suíte cobre regras de cálculo, categorias, assinaturas, fluxos do assistente, autenticação do backend, troca de sessão e validações de scripts. Testes de integração reais com Firebase e validação visual no navegador continuam sendo tratados separadamente.
 
-- Credenciais privadas de IA pertencem ao servidor, fora dos recursos distribuídos ao navegador.
-- Uma credencial anteriormente exposta precisa ser revogada no provedor. Retirá-la da versão atual não apaga o histórico nem invalida cópias existentes.
-- A configuração Web do Firebase é pública. O acesso aos dados depende de Authentication e Security Rules corretamente publicadas; restrinja a chave Web às APIs necessárias.
-- O caminho `users/{uid}` organiza os dados, mas não comprova isolamento por si só. Confira e teste as regras no Firebase.
+## Observações técnicas e segurança
 
-## Autor e uso
+- Credenciais privadas do assistente pertencem ao backend e não devem ser distribuídas no navegador.
+- A configuração Web do Firebase é pública por natureza; o isolamento dos dados depende de Authentication e Security Rules corretamente configuradas.
+- O score financeiro e as projeções são heurísticas do próprio projeto e não representam aconselhamento financeiro.
+- Algumas integrações dependem de configuração externa e podem exigir validação no ambiente de produção.
+
+## Objetivo
+
+O Finance AI foi desenvolvido como projeto de portfólio e evolução prática em **desenvolvimento web, autenticação, persistência de dados, dashboards, automação e arquitetura de aplicações**.
+
+## Autor
 
 Desenvolvido por **Thalys Daychoum**.
 
-Este projeto é de uso pessoal e privado, conforme a declaração original do autor. Nenhuma licença de código aberto foi adicionada nesta revisão.
+[GitHub](https://github.com/daychoumt) · [LinkedIn](https://www.linkedin.com/in/thalys-daychoum/)
